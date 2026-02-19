@@ -46,6 +46,10 @@ def init_db():
 app = Flask(__name__)
 app.secret_key = APP_SECRET
 
+# Initialize DB on startup (for Gunicorn/Render)
+with app.app_context():
+    init_db()
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
