@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <h3>{{ med.name }}</h3>
+  <div>
+    <a class="btn btn-sm btn-outline-success" href="/train/{{ med.id }}">Train Model</a>
+    <a class="btn btn-sm btn-outline-secondary" href="/">Back</a>
+  </div>
+</div>
+
+{% if shortage %}
+  <div class="alert alert-danger mt-3">SHORTAGE RISK predicted in next 7 days</div>
+{% endif %}
+
+<canvas id="chart" height="120"></canvas>
+
+<h5 class="mt-4">Records</h5>
+<table class="table table-sm">
+  <thead><tr><th>Date</th><th>Opening</th><th>Used</th><th>Received</th><th>Closing</th></tr></thead>
+  <tbody>
+    {% for d,v in zip(dates, values) %}
+    <tr><td>{{ d }}</td><td>-</td><td>-</td><td>-</td><td>{{ v }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+const dates = {{ dates|tojson }};
+const values = {{ values|tojson }};
+const preds = {{ preds|tojson }};
+const futureDates = [];
+if (dates.length>0) {
+  let last = new Date(dates[dates.length-1]);
+  for (let i=1;i<=7;i++){
+    let d = new Date(last);
+    d.setDate(d.getDate()+i);
+    futureDates.push(d.toISOString().slice(0,10));
+  }
+}
+
+const ctx = document.getElementById('chart');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dates.concat(futureDates),
+    datasets: [
+      {label: 'Actual', data: values.concat(new Array(7).fill(null)), borderColor: 'blue', tension:0.2},
+      {label: 'Predicted', data: new Array(values.length).fill(null).concat(preds), borderColor: 'red', borderDash:[5,5], tension:0.2}
+    ]
+  },
+  options: {responsive:true}
+});
+</script>
+
+{% endblock %}
